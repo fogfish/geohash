@@ -1,0 +1,2 @@
+# geohash
+GeoHash Data Type
