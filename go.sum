@@ -1,0 +1,4 @@
+github.com/cabify/geohash-golang v0.0.0-20190128130436-14c0666f2cfc h1:LrEwYJLxnMZvzoc/4iR/yNqBhr96ZkaoSajzSW+MAbk=
+github.com/cabify/geohash-golang v0.0.0-20190128130436-14c0666f2cfc/go.mod h1:zBZVD2ErgU7XBAzzvyXU4f1Y7/zHzoTwjJtfqcJAKFU=
+github.com/fogfish/it/v2 v2.0.1 h1:vu3kV2xzYDPHoMHMABxXeu5CoMcTfRc4gkWkzOUkRJY=
+github.com/fogfish/it/v2 v2.0.1/go.mod h1:h5FdKaEQT4sUEykiVkB8VV4jX27XabFVeWhoDZaRZtE=
