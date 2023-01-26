@@ -96,3 +96,36 @@ func TestGeoHashesIn(t *testing.T) {
 	// fmt.Println(seq)
 	// fmt.Println(geohash.Predecessors(seq))
 }
+
+func TestShortestPath(t *testing.T) {
+	bag := geohash.GeoHashes{
+		"ud9wpwv2kccp",
+		"ud9wpr1trmrv",
+		"ud9wpxjrf7wx",
+		"ud9wpx61yuyw",
+		"ud9wprkgjd38",
+		"ud9wpxm6jh2t",
+		"ud9wprs33e86",
+		"ud9wprt60ez9",
+		"ud9wnyee164z",
+		"ud9wpxs7wbw9",
+		"ud9wpxdv8zku",
+		"ud9wpxthtvc6",
+		"ud9wpxstky14",
+		"ud9wnyg1cyny",
+		"ud9wpxfgpys7",
+		"ud9wpxcun8dn",
+		"ud9wprvhhs3q",
+	}
+
+	seq, _ := geohash.ShortestPath(bag)
+	it.Then(t).Should(
+		it.Seq(seq).Equal(
+			"ud9wpwv2kccp", "ud9wpxjrf7wx", "ud9wpxm6jh2t", "ud9wpxs7wbw9",
+			"ud9wpxstky14", "ud9wpxthtvc6", "ud9wpxdv8zku", "ud9wpxfgpys7",
+			"ud9wpxcun8dn", "ud9wpx61yuyw", "ud9wprkgjd38", "ud9wprs33e86",
+			"ud9wprt60ez9", "ud9wprvhhs3q", "ud9wpr1trmrv", "ud9wnyee164z",
+			"ud9wnyg1cyny",
+		),
+	)
+}

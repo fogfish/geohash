@@ -139,6 +139,7 @@ func Predecessors(seq GeoHashes) []GeoHashes {
 	return layers
 }
 
+// Calculate "weights" of GeoHashes fitted into the area
 func Weights(hashes GeoHashes, hashNorthEast, hashSouthWest GeoHash) []float64 {
 	seq := make([]float64, len(hashes))
 	boxN, boxE := ToLatLng(hashNorthEast)
@@ -180,4 +181,35 @@ func areaOf(latSouth, lngWest, latNorth, lngEast float64) float64 {
 	a := distance(latSouth, lngWest, latNorth, lngWest)
 	b := distance(latSouth, lngWest, latSouth, lngEast)
 	return a * b
+}
+
+func ShortestPath(hashes GeoHashes) (GeoHashes, []float64) {
+	hashSet := map[GeoHash][]float64{}
+	for _, hash := range hashes {
+		lat, lng := ToLatLng(hash)
+		hashSet[hash] = []float64{lng, lat}
+	}
+
+	seq := make(GeoHashes, len(hashes))
+	hop := make([]float64, len(hashes))
+	seq[0] = hashes[0]
+
+	src := hashSet[hashes[0]]
+	delete(hashSet, hashes[0])
+
+	for i := 1; i < len(hashes); i++ {
+		hop[i-1] = 637800.0
+		for hash, dst := range hashSet {
+			d := distance(src[1], src[0], dst[1], dst[0]) * 1000
+			if d < hop[i-1] {
+				hop[i-1] = d
+				seq[i] = hash
+			}
+		}
+
+		src = hashSet[seq[i]]
+		delete(hashSet, seq[i])
+	}
+
+	return seq, hop
 }
