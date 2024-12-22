@@ -183,6 +183,7 @@ func areaOf(latSouth, lngWest, latNorth, lngEast float64) float64 {
 	return a * b
 }
 
+// Build shortest path from sequence of hashes
 func ShortestPath(hashes GeoHashes) (GeoHashes, []float64) {
 	hashSet := map[GeoHash][]float64{}
 	for _, hash := range hashes {
