@@ -3,7 +3,6 @@ package geohash
 import (
 	"math"
 
-	"github.com/cabify/geohash-golang"
 	hasher "github.com/cabify/geohash-golang"
 )
 
@@ -147,7 +146,7 @@ func Weights(hashes GeoHashes, hashNorthEast, hashSouthWest GeoHash) []float64 {
 	areaViewport := areaOf(boxS, boxW, boxN, boxE)
 
 	for i, x := range hashes {
-		bb := geohash.Decode(string(x))
+		bb := hasher.Decode(string(x))
 		s := math.Max(bb.SouthWest().Lat(), boxS)
 		n := math.Min(bb.NorthEast().Lat(), boxN)
 		w := math.Max(bb.SouthWest().Lng(), boxW)
@@ -183,6 +182,7 @@ func areaOf(latSouth, lngWest, latNorth, lngEast float64) float64 {
 	return a * b
 }
 
+// Build shortest path from sequence of hashes
 func ShortestPath(hashes GeoHashes) (GeoHashes, []float64) {
 	hashSet := map[GeoHash][]float64{}
 	for _, hash := range hashes {
