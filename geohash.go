@@ -159,6 +159,13 @@ func Weights(hashes GeoHashes, hashNorthEast, hashSouthWest GeoHash) []float64 {
 	return seq
 }
 
+// Approximates distance between GeoHashes
+func Distance(a, b GeoHash) float64 {
+	lat1, lng1 := ToLatLng(a)
+	lat2, lng2 := ToLatLng(b)
+	return distance(lat1, lng1, lat2, lng2)
+}
+
 func distance(lat1, lng1, lat2, lng2 float64) float64 {
 	r := 6378.0
 	degToRad := math.Pi / 180.0
