@@ -330,7 +330,3 @@ func ShortestPath(hashes GeoHashes) (GeoHashes, []float64) {
 
 	return seq, hop
 }
-
-// // Each GeoHash contains 32 inner tiles, either 8x4 or 4x8 depending on the level (rank of the hash).
-// //
-// func Vhashes(hash GeoHash) GeoHashes {}
