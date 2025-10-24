@@ -88,13 +88,12 @@ func TestToLatLng(t *testing.T) {
 }
 
 func TestGeoHashesIn(t *testing.T) {
-	// d := 0.01
-	// ne := geohash.New(60.1699+d, 24.9384+d, 6)
-	// sw := geohash.New(60.1699-d, 24.9384-d, 6)
+	sw, ne := geohash.GeoHash("ud9wn"), geohash.GeoHash("ud9y8")
+	seq := geohash.GeoHashesIn(ne, sw)
 
-	// seq := geohash.GeoHashesIn(ne, sw)
-	// fmt.Println(seq)
-	// fmt.Println(geohash.Predecessors(seq))
+	it.Then(t).Should(
+		it.Seq(seq).Equal("ud9ww", "ud9wx", "ud9y8", "ud9wq", "ud9wr", "ud9y2", "ud9wn", "ud9wp", "ud9y0"),
+	)
 }
 
 func TestShortestPath(t *testing.T) {
@@ -127,5 +126,40 @@ func TestShortestPath(t *testing.T) {
 			"ud9wprt60ez9", "ud9wprvhhs3q", "ud9wpr1trmrv", "ud9wnyee164z",
 			"ud9wnyg1cyny",
 		),
+	)
+}
+
+func TestExpand(t *testing.T) {
+	hash := geohash.GeoHash("ud9wr3xe")
+	radius := 1.0 // 1 km
+
+	ne, sw := geohash.Expand(hash, radius)
+
+	// Test that we get valid geohashes back
+	it.Then(t).Should(
+		it.True(len(ne) > 0),
+		it.True(len(sw) > 0),
+		it.Equal(len(ne), len(hash)), // Same precision as input
+		it.Equal(len(sw), len(hash)), // Same precision as input
+	)
+
+	// Test that the corners are roughly the expected distance away
+	distanceNE := geohash.Distance(hash, ne)
+	distanceSW := geohash.Distance(hash, sw)
+
+	// Distance should be close to radius (within reasonable tolerance due to approximation)
+	it.Then(t).Should(
+		it.True(distanceNE > 0.5 && distanceNE < 1.5), // Within 50% tolerance
+		it.True(distanceSW > 0.5 && distanceSW < 1.5), // Within 50% tolerance
+	)
+
+	// Test with different radius
+	ne5, sw5 := geohash.Expand(hash, 5.0)
+	distance5NE := geohash.Distance(hash, ne5)
+	distance5SW := geohash.Distance(hash, sw5)
+
+	it.Then(t).Should(
+		it.True(distance5NE > distanceNE), // Larger radius should give larger distance
+		it.True(distance5SW > distanceSW), // Larger radius should give larger distance
 	)
 }
