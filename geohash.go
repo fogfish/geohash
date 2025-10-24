@@ -37,9 +37,25 @@ func NorthOf(hash GeoHash) GeoHash {
 	return GeoHash(hasher.CalculateAdjacent(string(hash), "top"))
 }
 
+func ToNorth(hash GeoHash, n int) (north GeoHash) {
+	north = hash
+	for range n {
+		north = NorthOf(north)
+	}
+	return
+}
+
 // GeoHash to south of given one
 func SouthOf(hash GeoHash) GeoHash {
 	return GeoHash(hasher.CalculateAdjacent(string(hash), "bottom"))
+}
+
+func ToSouth(hash GeoHash, n int) (south GeoHash) {
+	south = hash
+	for range n {
+		south = SouthOf(south)
+	}
+	return
 }
 
 // GeoHash to east of given one
@@ -47,9 +63,25 @@ func EastOf(hash GeoHash) GeoHash {
 	return GeoHash(hasher.CalculateAdjacent(string(hash), "right"))
 }
 
+func ToEast(hash GeoHash, n int) (east GeoHash) {
+	east = hash
+	for range n {
+		east = EastOf(east)
+	}
+	return
+}
+
 // GeoHash to west of given one
 func WestOf(hash GeoHash) GeoHash {
 	return GeoHash(hasher.CalculateAdjacent(string(hash), "left"))
+}
+
+func ToWest(hash GeoHash, n int) (west GeoHash) {
+	west = hash
+	for range n {
+		west = WestOf(west)
+	}
+	return
 }
 
 // Converts GeoHash to (lat,lng) pair
@@ -68,11 +100,64 @@ func ToBBox(hash GeoHash) (n float64, e float64, s float64, w float64) {
 	return
 }
 
+func Expand(hash GeoHash, radius float64) (hashNorthEast, hashSouthWest GeoHash) {
+	// Get center coordinates of the input geohash
+	centerLat, centerLng := ToLatLng(hash)
+
+	// Earth's radius in kilometers
+	earthRadius := 6378.0
+
+	// Calculate the angular distance in radians
+	angularDistance := radius / earthRadius
+
+	// Convert to degrees
+	degToRad := math.Pi / 180.0
+	radToDeg := 180.0 / math.Pi
+
+	centerLatRad := centerLat * degToRad
+
+	// Calculate latitude offset
+	latOffset := angularDistance * radToDeg
+
+	// Calculate longitude offset (accounting for latitude)
+	lngOffset := angularDistance * radToDeg / math.Cos(centerLatRad)
+
+	// Calculate corner coordinates
+	northLat := centerLat + latOffset
+	southLat := centerLat - latOffset
+	eastLng := centerLng + lngOffset
+	westLng := centerLng - lngOffset
+
+	// Clamp latitude to valid range [-90, 90]
+	if northLat > 90 {
+		northLat = 90
+	}
+	if southLat < -90 {
+		southLat = -90
+	}
+
+	// Handle longitude wrapping around [-180, 180]
+	if eastLng > 180 {
+		eastLng = eastLng - 360
+	}
+	if westLng < -180 {
+		westLng = westLng + 360
+	}
+
+	// Create geohashes with the same precision as input
+	precision := Precision(len(hash))
+	hashNorthEast = New(northLat, eastLng, precision)
+	hashSouthWest = New(southLat, westLng, precision)
+
+	return
+}
+
 // Unordered Set of GeoHashes
 type GeoHashes []GeoHash
 
 // Calculate all GeoHashes that overlaps with area defined by two points
 func GeoHashesIn(hashNorthEast, hashSouthWest GeoHash) GeoHashes {
+	// TODO: simple trunk do not work (re-coding is needed)
 	p := len(hashNorthEast)
 	if len(hashSouthWest) < p {
 		p = len(hashSouthWest)
@@ -115,6 +200,28 @@ func hashesWestToEast(w, e GeoHash) GeoHashes {
 	return seq
 }
 
+// Extends existing GeoHash by col and row offsets
+func Neighbor(hash GeoHash, x, y int) GeoHashes {
+	north := ToNorth(hash, y)
+	south := ToSouth(hash, y)
+	northEast := ToEast(north, x)
+	northWest := ToWest(north, x)
+	southEast := ToEast(south, x)
+	southWest := ToWest(south, x)
+
+	// first and last columns of the box
+	head := hashesNorthToSouth(northWest, southWest)
+	tail := hashesNorthToSouth(northEast, southEast)
+
+	// fill the box
+	area := []GeoHash{}
+	for i := 0; i < len(head); i++ {
+		area = append(area, hashesWestToEast(head[i], tail[i])...)
+	}
+
+	return area
+}
+
 // Calculates all predecessors (higher rank) GeoHashes from the set.
 func Predecessors(seq GeoHashes) []GeoHashes {
 	n := len(seq[0]) - 1
@@ -140,11 +247,14 @@ func Predecessors(seq GeoHashes) []GeoHashes {
 
 // Calculate "weights" of GeoHashes fitted into the area
 func Weights(hashes GeoHashes, hashNorthEast, hashSouthWest GeoHash) []float64 {
-	seq := make([]float64, len(hashes))
 	boxN, boxE := ToLatLng(hashNorthEast)
 	boxS, boxW := ToLatLng(hashSouthWest)
+	if hashNorthEast == hashSouthWest {
+		boxN, boxE, boxS, boxW = ToBBox(hashNorthEast)
+	}
 	areaViewport := areaOf(boxS, boxW, boxN, boxE)
 
+	seq := make([]float64, len(hashes))
 	for i, x := range hashes {
 		bb := hasher.Decode(string(x))
 		s := math.Max(bb.SouthWest().Lat(), boxS)
@@ -220,3 +330,7 @@ func ShortestPath(hashes GeoHashes) (GeoHashes, []float64) {
 
 	return seq, hop
 }
+
+// // Each GeoHash contains 32 inner tiles, either 8x4 or 4x8 depending on the level (rank of the hash).
+// //
+// func Vhashes(hash GeoHash) GeoHashes {}
